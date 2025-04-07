@@ -1,4 +1,4 @@
-
+w
   
 clave unica 200497  
 
@@ -384,17 +384,23 @@ U = sum (bonop1*e[0] + bonop2*e[1]) de 1 hasta T donde e es un arreglo de elecci
 La informacion del proxy son las elecciones que has ido haciendo a lo largo del juego
 
 
-El agente debería preguntar por la probabilidad de un brazo primero, y luego decidir cuál jalar. El objetivo es maximizar:
+El objetivo es maximizar:
 
 $$
 \max_{\text{Pol}} \mathbb{E}^{\text{Pol}}\left[\sum_{t=1}^{T} \left(R_t + \beta B_t\right)\right]
 $$
 
+El agente puede preguntar por la probabilidad de uno de los brazos, y deducir cómo se va a comportar el otro, pues conoce las matrices de transición. Con base en esas comparaciones, podrá decidir qué brazo jalar. 
+
 ```
 
 **Pregunta de Intuición**
 ```
-Disponer de la probabilidad exacta de uno de los brazos debería impactar en la decisión de qué brazo jalar. Lo ideal searía alternar la exploración de los brazos para tener una mejor idea de cómo es la matriz de estados. Luego habría que establecer un criterio de dada la probabilidad descubierta, si conviene jalar el brazo conocido o es mejor arriesgarse a jalar el otro con el objetivo de maximizar el bono.
+Disponer de la probabilidad exacta de uno de los brazos impacta en la decisión de qué brazo jalar... 
+
+Conocer la matriz de estados no es vital pues se conocen las matrices exactas de transición. Sin embargo, lo ideal sería alternar la exploración de los brazos para ganar bonos. 
+
+Luego habría que establecer un criterio de dada la probabilidad descubierta, si conviene jalar el brazo conocido o es mejor arriesgarse a jalar el otro con el objetivo de maximizar el premio. Si conoces la probabilidad exacta de un brazo y puedes inferir la del otro dada su matriz de transición, y así saber en qué estado de naturaleza de encuntras. 
 
 ```
 ---
@@ -427,17 +433,19 @@ Disponer de la probabilidad exacta de uno de los brazos debería impactar en la 
 
 **Definición del Problema**
 ```
-El groso modo de la definición del problema no cambia con respecto al anterior. La diferencia radica en que esta vez no conozcemos la matriz de transición entre los brazos y debemos inferirla. Sin embargo, los estados siguien siendo los mismos: 
+El groso modo de la definición del problema no cambia con respecto al anterior. La diferencia radica en que esta vez no conozcemos la matriz de transición entre los brazos y debemos inferirla. Sin embargo, los estados de naturaleza siguien siendo los mismos: 
 O1. p1 > p2
 O2. p1 < p2
 
-Explorar esta matriz será misión del agente, lo que implica que deberá dedicar más de sus intentos para descubrir cómo fluyen los estados entre sí. O sea, tendrá que preguntar por la probabilidad del mismo brazo varias veces seguidas para darse una idea de cómo cambia de estado. 
+Explorar esta matriz será misión del agente, lo que implica que deberá dedicar más de sus intentos para descubrir cómo fluyen los estados entre sí. O sea, tendrá que preguntar por la probabilidad del mismo brazo varias veces seguidas para darse una idea de cómo cambia de estado. El objetivo sigue siendo maximizar el premio.
 
 ```
 
 **Pregunta de Intuición**
 ```
-Preguntar por la probabilidad exacta de un brazo va más allá de decidir si se va a elegir en este turno o no. Saber cuál es la probabilidad de un brazo varias veces seguidas nos dirá cuáles son varios de sus estados, y con ayuda de ciertos algorimos se puede inferir bajo qué reglas transicionan los estados. Por eso es conveniente tomarse el tiempo de explorar ambos brazos y deducir sus transiciones, pues saiendo qué estado puede seguir, se puede decidir mejor qué brazo elegir. El objetivo sigue siendo maximizar el bono.
+Preguntar por la probabilidad exacta de un brazo va más allá de decidir si se va a elegir en este turno o no. Saber cuál es la probabilidad de un brazo varias veces seguidas nos dirá cuáles son varios de sus estados, y de ahí se puede inferir bajo qué reglas transicionan los estados entre sí. 
+
+Es conveniente tomarse el tiempo de explorar ambos brazos y deducir su matriz de transiciones, pues se acumulan bonos por exploración y ya con las matrices reveladas, se puede decidir con seguridad un brazo.
 
 ```
 ---
@@ -480,7 +488,7 @@ Explorar la relación le queda de tarea al agente, pues aunque conoce las transi
 
 **Pregunta de Intuición**
 ```
-Si las probabilidades de ambos brazos están correlacionadas, y además conocemos cómo se relacionan entre sí, teniendo la probabilidad de uno se puede sacar la del otro. Además, una de las acciones siguie siendo preguntar por la probabilidad de un brazo. Entonces, casi se asegura alcanzar la utilidad máxima para cada juego. Casi porque siempre se pierde algo de tiempo en la exploración y puede haber errores.
+Si las probabilidades de ambos brazos están correlacionadas, y además conocemos cómo se relacionan entre sí, teniendo la probabilidad de uno se puede sacar la del otro. Además, una de las acciones siguie siendo preguntar por la probabilidad de un brazo. Entonces, casi se asegura alcanzar la utilidad máxima para cada juego. Casi porque siempre se pierde algo de tiempo en la exploración (aunque se obtengan bonos) y puede haber errores.
 
 ```
 ---
@@ -512,17 +520,19 @@ Si las probabilidades de ambos brazos están correlacionadas, y además conocemo
 
 **Definición del Problema**
 ```
-Por última vez, la definición del problema no cambia con respecto al anterior. La diferencia final radica en que las probabilidades de los estados estan relacionadas, pero los estados en sí siguien siendo: 
+Por última vez, la definición del problema no cambia tampoco. Ahora consultar un brazo reduce su observabilidad en siguientes consultas. Sus estados son: 
 O1. p1 > p2
 O2. p1 < p2
 
-Explorar la relación le queda de tarea al agente, pues aunque conoce las transiciones entre los estados y puede averiguar la probabilidad de un brazo a la vez, no tiene la regla que sigue la correlación.
+Si se puede agotar la observabilidad de un brazo y el horizonte ya no es fijo. El agente deberá medir la exploración que hace. Es decir, deberá explorar lo suficiente para poder inferir las matrices de transición y luego confiar en sus deducciones.
 
 ```
 
 **Pregunta de Intuición**
 ```
+La consulta de éxito sirve tanto para explotar un brazo prometedor como para refinar la deducción de las matrices de transición. Por un lado, hay que explorar ambos brazos pronto, para que no se agote la observabilidad ni se acaben los turnos. 
 
+Como en el caso independiente a las cadenas de Markov, alterar en la exploración de los brazos es la mejor estrategia. Incluso si el horizonte fuera muy corto, se aprovecharía mejor lo que ambos los brazos tengan que ofrecer.
 
 ```
 ---
